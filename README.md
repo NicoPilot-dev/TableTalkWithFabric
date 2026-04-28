@@ -90,7 +90,7 @@ Once the DAX works, the agent renders a vertical-bar chart via the adaptive-card
 
 ## 🧩 How the agent learns your schema
 
-The agent discovers **columns** dynamically — for any table it knows about, it runs `EVALUATE TOPN(3, 'TableName')` and learns the columns + sample values on the fly. **Today, it can't list the tables in your model on its own.**.
+The agent discovers **columns** dynamically — for any table it knows about, it runs `EVALUATE TOPN(3, 'TableName')` and learns the columns + sample values on the fly. **Today, it can't list the tables in your model on its own.**
 
 So you teach the agent about your tables. Two patterns work; the second is what most customers actually ship to production.
 
