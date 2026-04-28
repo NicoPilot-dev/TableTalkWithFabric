@@ -12,7 +12,7 @@ TableTalk writes real DAX queries, runs them against a Power BI / Fabric semanti
 
 Your tenant. Your data. Your permissions. Your agent. TableTalk is designed to be easy to deploy, and yours end-to-end.
 
-- ✅ **Production-ready — every component is GA.** Copilot Studio, Power BI connector, Power Automate, adaptive cards. **No preview features** — you can deploy to production next week.
+- ✅ **Production-ready — every component is GA.** Copilot Studio, Power BI connector, Agent Flow (Power Automate), adaptive cards. **No preview features** — you can deploy to production next week.
 - ✅ **Only the standard Power BI connector**
 - ✅ **No Dataverse tables, no custom code, no plugins**
 - ✅ **Zero-copy data** — queries hit your semantic model **live**. Nothing is duplicated, embedded, or chunked into a side store.
