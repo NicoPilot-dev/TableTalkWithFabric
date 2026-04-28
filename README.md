@@ -84,13 +84,13 @@ Once the DAX works, the agent renders a vertical-bar chart via the adaptive-card
 
 ![Chart and summary output](03-chart-and-summary.png)
 
-> 📝 **Total time from question to answer:** about 30 seconds. **Total tools used:** 1 refresh + 3 DAX queries + 1 chart render. **Code written by the human:** zero.
+> 📝 **Total time from question to answer:** about 30 seconds. **Total tools used:** 1 refresh + 3 DAX queries + 1 chart render.
 
 ---
 
 ## 🧩 How the agent learns your schema
 
-The agent discovers **columns** dynamically — for any table it knows about, it runs `EVALUATE TOPN(3, 'TableName')` and learns the columns + sample values on the fly. **But it can't list the tables in your model on its own.** That would require Power BI REST API access via Microsoft Entra app registration — exactly the kind of governance overhead this project is designed to avoid.
+The agent discovers **columns** dynamically — for any table it knows about, it runs `EVALUATE TOPN(3, 'TableName')` and learns the columns + sample values on the fly. **Today, it can't list the tables in your model on its own.**.
 
 So you teach the agent about your tables. Two patterns work; the second is what most customers actually ship to production.
 
@@ -146,7 +146,7 @@ Both flows use connection reference `shared_powerbi` and run as the invoker.
 
 ### 🧬 Pure agentic — operational instructions live at the tool level
 
-There's no RAG sidecar in this picture. No embedding job, no vector store, no chunked-document index. Data is queried live on every request, so the model is the source of truth and there's nothing extra to deploy or keep in sync.
+There's no RAG sidecar in this picture. No embedding job, no vector store, no chunked-document index. Data is queried live on every request, so the semantic model is the source of truth and there's nothing extra to deploy or keep in sync.
 
 The other architectural choice worth calling out: **operational guidance is embedded in each tool, not crammed into the agent's system prompt.** The DAX-query tool, for instance, carries its own description of when to use `TOPN(3)` vs. `SUMMARIZECOLUMNS`, how to chain queries, and how to handle truncation. The agent's own prompt stays short and personality-focused — it decides *when* to reach for a tool; the tool tells it *how*.
 
