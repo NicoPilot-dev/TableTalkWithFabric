@@ -22,9 +22,9 @@ Your tenant. Your data. Your permissions. Your agent. TableTalk is designed to b
 
 **All you need:**
 1. A Power Platform environment with **Copilot Studio** enabled
-2. Anthropic models in Copilot Studio
+2. **Anthropic models** in Copilot Studio
 3. The **Power BI connector**
-4. A semantic model the user has at least *Build* permission on
+4. **A Fabric semantic model** the user has at least *Build* permission on
 
 ---
 
