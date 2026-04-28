@@ -65,6 +65,70 @@ This is the bridge that keeps Power BI as the place for deep analysis: the agent
 
 ---
 
+## 👀 See it in action
+
+A real walkthrough using TableTalk against the **Copilot Studio admin tables** (bot + conversationtranscript) surfaced in Fabric. The user asks a single question — *"Can you show me how many conversation happen yesterday, hourly"* — and the agent does the rest.
+
+### Step 1 — Greeting & dataset refresh
+The agent introduces itself with the production-ready pitch baked into its persona, then **refreshes the dataset first** so the answer reflects the latest data. The left pane shows the `Refresh dataset` tool completing in ~4 seconds.
+
+![Greeting and dataset refresh](01-greeting-and-refresh.png)
+
+### Step 2 — Discover → aggregate → self-correct (the QueryGoal in action)
+This is where the analyst workflow shows up. The agent narrates each step in plain English, and **when a DAX query fails, it diagnoses and retries** — here it hits a `HOUR()` single-value error, then rewrites the query using `SELECTCOLUMNS` + `GROUPBY` on the third attempt. Each attempt's QueryGoal explains exactly what it's trying and why.
+
+![DAX iteration with QueryGoal reasoning](02-dax-iteration-querygoal.png)
+
+### Step 3 — Chart + summary, ready to share
+Once the DAX works, the agent renders a vertical-bar chart via the adaptive-card chart topic and follows up with a structured summary table — *Late Night / Midday Burst / Evening Surge* — that's already business-ready, not just a raw count.
+
+![Chart and summary output](03-chart-and-summary.png)
+
+> 📝 **Total time from question to answer:** about 30 seconds. **Total tools used:** 1 refresh + 3 DAX queries + 1 chart render. **Code written by the human:** zero.
+
+---
+
+## 🧩 How the agent learns your schema
+
+The agent discovers **columns** dynamically — for any table it knows about, it runs `EVALUATE TOPN(3, 'TableName')` and learns the columns + sample values on the fly. **But it can't list the tables in your model on its own.** That would require Power BI REST API access via Microsoft Entra app registration — exactly the kind of governance overhead this project is designed to avoid.
+
+So you teach the agent about your tables. Two patterns work; the second is what most customers actually ship to production.
+
+### Option A — List tables in the system prompt (fast PoC)
+Drop a short list of table names into the agent's instructions:
+
+```
+# Tables available in this model
+- bot
+- conversationtranscript
+- customer
+- orders
+```
+
+No need to list columns — TOPN(3) handles those on first use. A 5-minute change, perfect for a quick demo.
+
+### Option B — A metadata table inside your semantic model (what customers actually ship)
+Create a small table in your Fabric model — call it `_metadata` or `_dictionary` — with one row per column you care about:
+
+| TableName | ColumnName | Description | Business rules |
+|-----------|-----------|-------------|----------------|
+| `orders` | `revenue_cents` | Order revenue, stored in cents | Divide by 100 to display in dollars |
+| `customer` | `segment` | Customer tier | Only "Enterprise" and "SMB" are reportable; ignore "Internal" |
+| `orders` | `status` | Order status | Only count rows where status = 'Confirmed' |
+
+Then tell the agent in its instructions: *"At the start of every conversation, EVALUATE the `_metadata` table and treat the `Business rules` column as ground truth."*
+
+Think of it as **the README of your dataset, kept inside the dataset itself**. Why customers love this pattern:
+
+- **Business users own it.** Adding a column or rewriting a rule is a Fabric edit — no developer ticket, no agent re-publish, no PR.
+- **Domain rules ship with the data.** The agent picks up things like *"always exclude internal customers"* automatically, without anyone explaining it in chat.
+- **Zero-copy stays zero-copy.** The metadata lives in the same model as the data — no second store to govern, no drift.
+- **Same connector, same auth, same flow.** No app registration, no service principal, no new governance review.
+
+For larger or multi-tenant deployments, this is also where you can encode row-level filter hints, currency conversions, deprecation flags (*"don't use this column anymore — use `revenue_v2`"*), and anything else a business owner wishes the agent would just *know*.
+
+---
+
 ## 🏗️ Architecture
 
 ```mermaid
@@ -127,6 +191,7 @@ Open the agent → **Instructions** and look for the `# Fabric #` block. Update 
 |-------|----------------|---------|
 | `workspaceid` | Agent instructions | Your Fabric/Power BI workspace GUID |
 | `datasetid` | Agent instructions | The semantic model GUID you want to query |
+| Table list / metadata-table reference | Agent instructions | See [How the agent learns your schema](#-how-the-agent-learns-your-schema) |
 | Power BI report URL | Agent instructions | Your own report (used for the filtered click-through links — see capability #4) |
 
 You can also pass `workspaceid` / `datasetid` dynamically — the **Send DAX Query** topic accepts both as inputs, so the agent can be steered to different semantic models per conversation.
@@ -157,6 +222,7 @@ Open the imported solution and find the connection reference for the Power BI co
 ### 4. Customize the agent instructions
 Open the **TableTalk with Fabric** agent → **Instructions** and:
 - Replace the example `workspaceid` / `datasetid` with yours (or remove that block)
+- **Teach it your schema** — list your tables, or point it at a metadata table (see [How the agent learns your schema](#-how-the-agent-learns-your-schema))
 - Update or remove the Power BI report URL used for click-through links
 - Optionally: tweak the analyst-style instructions to match your domain
 
@@ -178,6 +244,7 @@ Hit **Publish** and surface the agent in Teams, a demo site, M365 Copilot, etc.
 | Problem | Likely fix |
 |---------|------------|
 | Agent picks wrong workspace/dataset | The hardcoded IDs in the instructions are still pointing at the original — update them |
+| Agent doesn't know what tables exist | Teach it — see [How the agent learns your schema](#-how-the-agent-learns-your-schema) |
 | Filtered Power BI link doesn't filter | Check that spaces (`%20`) and single quotes (`%27`) are URL-encoded in the agent's filter string, and that the field name (e.g. `bot/name`) actually exists in the report's semantic model |
 | Anthropic Model not available | Ask your Copilot Studio / Power Platform admin team |
 
