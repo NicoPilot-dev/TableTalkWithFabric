@@ -8,7 +8,7 @@ TableTalk writes real DAX queries, runs them against a Power BI / Fabric semanti
 
 ---
 
-## 🪶 Copilot Studio : Own your AI. Secure and Low friction.
+## 🪶 Copilot Studio : Own your AI. Own your orchestration. Secure and Low friction.
 
 Your tenant. Your data. Your permissions. Your agent. TableTalk is designed to be easy to deploy, and yours end-to-end.
 
